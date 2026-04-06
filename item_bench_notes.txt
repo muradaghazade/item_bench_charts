@@ -1,0 +1,38 @@
+1. Offer Valuation → Bullet-style (horizontal bar)
+Best for: price comparison
+Feels like benchmarking, not analytics
+
+2. Product Price → Multi-line + Offer line
+Shows:
+history (PO)
+prediction (AI)
+decision point (offer)
+
+- This is now a decision chart, not just trend
+
+3. Product Annual Spend → Bar + Line combo
+Bar = actual spend
+Line = trend
+
+- Gives importance + direction
+
+4. Incoterm → Grouped Bar (FIXED)
+Before: confusing lines
+Now: direct comparison
+
+- Buyer can answer:
+“Which incoterm is cheaper?”
+
+5. Category Trend → Indexed Line
+All start from same baseline
+
+- Now shows:
+which category increased more
+
+6. Vendor Spend → Stacked Bar
+Shows:
+total spend
+distribution
+
+- Critical for:
+supplier dependency
