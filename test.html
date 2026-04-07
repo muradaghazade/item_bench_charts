@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Procurement Decision Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen p-4 md:p-8 font-sans text-slate-900">
+
+    <div class="max-w-7xl mx-auto space-y-6">
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+            <div>
+                <h1 class="text-4xl font-black tracking-tight text-slate-900">Procurement Command Center</h1>
+                <p class="text-slate-500 mt-1 font-medium">Baku Destination | Real-time Market Comparison</p>
+            </div>
+            
+            <div class="flex items-center gap-6">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">My Target Price ($)</label>
+                    <input type="number" id="offerInput" value="350" oninput="updateAll()" class="block w-32 p-3 bg-slate-50 border border-slate-200 rounded-2xl font-mono font-bold text-xl text-indigo-600 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                </div>
+                <div id="decisionCard" class="bg-indigo-600 text-white p-4 rounded-2xl shadow-xl min-w-[240px] transition-all hover:scale-105">
+                    <span class="text-[9px] font-black uppercase tracking-tighter bg-white/20 px-2 py-0.5 rounded">Best Decision</span>
+                    <h2 id="winnerName" class="text-lg font-bold mt-1">--</h2>
+                    <div class="flex justify-between items-center mt-2">
+                        <span id="winnerTotal" class="text-2xl font-mono font-black">--</span>
+                        <span id="winnerRegion" class="text-[10px] font-medium opacity-80 uppercase tracking-wide">--</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                <div class="mb-4">
+                    <h3 class="font-bold text-slate-800 text-lg">Market Landscape</h3>
+                    <p class="text-xs text-slate-500 italic">Horizontal Axis: Distance from Baku (Left is closer)</p>
+                </div>
+                <div class="h-[350px]">
+                    <canvas id="scatterChart"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                <div class="mb-4">
+                    <h3 class="font-bold text-slate-800 text-lg">Detailed Cost Breakdown</h3>
+                    <p class="text-xs text-slate-500 italic">Comparing Unit Price vs. Delivery Fees</p>
+                </div>
+                <div class="h-[350px]">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <table class="w-full text-left text-sm">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-100 text-slate-400 uppercase text-[10px] font-black tracking-widest">
+                        <th class="px-8 py-5">Supplier & Region</th>
+                        <th class="px-6 py-5">Incoterm</th>
+                        <th class="px-6 py-5">Base Price</th>
+                        <th class="px-6 py-5">Delivery</th>
+                        <th class="px-6 py-5">Total Landed</th>
+                        <th class="px-8 py-5 text-right">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="tableRows" class="divide-y divide-slate-100">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Supplier Dataset
+        const marketData = [
+            { name: "Caucasus Supply", region: "Tbilisi, Georgia", proximity: 0.5, price: 325, delivery: 15, term: "DDP" },
+            { name: "Anatolia Logistics", region: "Istanbul, Turkey", proximity: 1.2, price: 300, delivery: 35, term: "DAP" },
+            { name: "EuroDirect", region: "Munich, Germany", proximity: 2.8, price: 335, delivery: 45, term: "EXW" },
+            { name: "SinoParts Mfg", region: "Guangdong, China", proximity: 4.5, price: 245, delivery: 105, term: "FOB" },
+            { name: "AmeriCorp", region: "Texas, USA", proximity: 5.0, price: 230, delivery: 165, term: "CIP" },
+            { name: "Baku Local Hub", region: "Baku, AZ", proximity: 0.1, price: 390, delivery: 0, term: "N/A" }
+        ];
+
+        let scatterChartInstance, barChartInstance;
+
+        function updateAll() {
+            const myLimit = parseFloat(document.getElementById('offerInput').value) || 0;
+            
+            const processed = marketData.map(s => ({
+                ...s,
+                total: s.price + s.delivery,
+                isUnder: (s.price + s.delivery) <= myLimit
+            })).sort((a, b) => a.total - b.total);
+
+            // Winner logic: Lowest total cost
+            const winner = processed[0];
+            document.getElementById('winnerName').innerText = winner.name;
+            document.getElementById('winnerTotal').innerText = `$${winner.total}`;
+            document.getElementById('winnerRegion').innerText = winner.region;
+
+            // Table update
+            const tbody = document.getElementById('tableRows');
+            tbody.innerHTML = '';
+            processed.forEach(s => {
+                const statusClass = s.isUnder ? 'text-emerald-600 bg-emerald-50' : 'text-rose-500 bg-rose-50';
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition-all group">
+                        <td class="px-8 py-4">
+                            <div class="font-bold text-slate-800">${s.name}</div>
+                            <div class="text-[10px] text-slate-400 font-medium">${s.region}</div>
+                        </td>
+                        <td class="px-6 py-4"><span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-black">${s.term}</span></td>
+                        <td class="px-6 py-4 text-slate-600 font-mono">$${s.price}</td>
+                        <td class="px-6 py-4 text-amber-600 font-mono">+$${s.delivery}</td>
+                        <td class="px-6 py-4 font-black text-slate-900 font-mono">$${s.total}</td>
+                        <td class="px-8 py-4 text-right">
+                            <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${statusClass}">
+                                ${s.isUnder ? '✓ Available' : '✕ Over Target'}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            renderCharts(processed, myLimit);
+        }
+
+        function renderCharts(data, limit) {
+            // SCATTER CHART
+            const scatterCtx = document.getElementById('scatterChart').getContext('2d');
+            if (scatterChartInstance) scatterChartInstance.destroy();
+            scatterChartInstance = new Chart(scatterCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'My Limit',
+                            data: [{x: 0, y: limit}, {x: 5, y: limit}],
+                            type: 'line',
+                            borderColor: '#6366f1',
+                            borderWidth: 2,
+                            borderDash: [10, 5],
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Suppliers',
+                            data: data.map(s => ({ x: s.proximity, y: s.total, name: s.name })),
+                            backgroundColor: data.map(s => s.total <= limit ? '#10b981' : '#f43f5e'),
+                            pointRadius: 10,
+                            pointHoverRadius: 14
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { title: { display: true, text: 'Baku Distance (Left=Closest)' }, min: 0, max: 5 },
+                        y: { title: { display: true, text: 'Total Landed Cost ($)' } }
+                    },
+                    plugins: { tooltip: { callbacks: { label: (c) => `${c.raw.name || 'Target'}: $${c.raw.y}` } } }
+                }
+            });
+
+            // STACKED BAR CHART
+            const barCtx = document.getElementById('barChart').getContext('2d');
+            if (barChartInstance) barChartInstance.destroy();
+            barChartInstance = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(s => s.name),
+                    datasets: [
+                        { label: 'Item Price', data: data.map(s => s.price), backgroundColor: '#3b82f6', stack: 's1' },
+                        { label: 'Delivery', data: data.map(s => s.delivery), backgroundColor: '#f59e0b', stack: 's1' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { x: { stacked: true }, y: { stacked: true, title: { display: true, text: 'Cost Structure ($)' } } }
+                }
+            });
+        }
+
+        updateAll();
+    </script>
+</body>
+</html>

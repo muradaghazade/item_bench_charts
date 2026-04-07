@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Logistics & Procurement Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+</head>
+<body class="bg-slate-50 min-h-screen p-4 md:p-8 font-sans text-slate-900">
+
+    <div class="max-w-7xl mx-auto space-y-6">
+        <header class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+            <div class="space-y-1">
+                <h1 class="text-3xl font-black tracking-tight text-slate-900 uppercase italic">Supply Intelligence v4</h1>
+                <p class="text-slate-500 font-medium">Baku Hub | <span class="text-indigo-600">5-Year Trend Analysis</span></p>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-4">
+                <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 flex flex-col justify-center">
+                    <label class="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-1">Your Offer ($)</label>
+                    <input type="number" id="offerInput" value="340" oninput="updateAll()" class="w-24 bg-transparent border-none font-mono font-black text-3xl text-indigo-600 outline-none p-0">
+                </div>
+                <div id="decisionCard" class="bg-slate-900 text-white p-5 rounded-2xl shadow-xl min-w-[280px]">
+                    <span class="text-[9px] font-black uppercase tracking-tighter bg-emerald-500 text-emerald-950 px-2 py-0.5 rounded">Current Best Route</span>
+                    <h2 id="winnerName" class="text-lg font-bold mt-2">--</h2>
+                    <div class="flex justify-between items-baseline mt-1">
+                        <span id="winnerTotal" class="text-3xl font-mono font-black text-emerald-400">--</span>
+                        <span id="marketDelta" class="text-xs font-mono font-bold text-white">--</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                <div>
+                    <h3 class="font-black text-slate-800 text-xl uppercase tracking-tight">5-Year Incoterm Price Evolution</h3>
+                    <p class="text-sm text-slate-500">Tracking how total landed costs have shifted by trade term since 2022.</p>
+                </div>
+                <div class="flex items-center gap-2 bg-slate-100 px-3 py-1 rounded-full text-[10px] font-bold text-slate-500 uppercase">
+                    <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Your Current Offer
+                </div>
+            </div>
+            <div class="h-[300px] w-full">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                <h3 class="font-bold text-slate-800 mb-4 uppercase text-xs tracking-widest">The Price Spectrum</h3>
+                <div class="h-[200px]"><canvas id="spectrumChart"></canvas></div>
+            </div>
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                <h3 class="font-bold text-slate-800 mb-4 uppercase text-xs tracking-widest">Base vs. Logistics Structure</h3>
+                <div class="h-[200px]"><canvas id="barChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+            <h3 class="font-bold text-slate-800 mb-4 uppercase text-xs tracking-widest">Regional Proximity (Distance vs Price)</h3>
+            <div class="h-[300px]"><canvas id="scatterChart"></canvas></div>
+        </div>
+    </div>
+
+    <script>
+        Chart.register(ChartDataLabels);
+
+        // --- DATASETS ---
+        const marketData = [
+            { name: "Caucasus Supply", region: "Tbilisi, GE", proximity: 0.5, price: 320, delivery: 15, term: "DDP" },
+            { name: "Anatolia Spares", region: "Istanbul, TR", proximity: 1.2, price: 290, delivery: 35, term: "DAP" },
+            { name: "Bavarian Tuning", region: "Munich, DE", proximity: 2.8, price: 345, delivery: 45, term: "EXW" },
+            { name: "Shenzhen Aero", region: "Guangdong, CN", proximity: 4.5, price: 240, delivery: 110, term: "FOB" },
+            { name: "Liberty Customs", region: "Texas, USA", proximity: 5.0, price: 215, delivery: 180, term: "CIP" },
+            { name: "Baku Direct", region: "Local, AZ", proximity: 0.1, price: 405, delivery: 0, term: "N/A" }
+        ];
+
+        // Historical Average Landed Costs by Incoterm
+        const historicalData = {
+            years: ['2022', '2023', '2024', '2025', '2026'],
+            DDP: [290, 310, 325, 330, 335],  // Stable Regional
+            FOB: [240, 410, 380, 355, 350],  // Volatile (Shipping Crises)
+            EXW: [300, 320, 350, 375, 390],  // Rising Base Prices
+            DAP: [310, 315, 320, 325, 325]   // Consistent
+        };
+
+        let trendChart, spectrumChart, barChart, scatterChart;
+
+        function updateAll() {
+            const myLimit = parseFloat(document.getElementById('offerInput').value) || 0;
+            const processed = marketData.map(s => ({
+                ...s,
+                total: s.price + s.delivery,
+                isUnder: (s.price + s.delivery) <= myLimit
+            })).sort((a, b) => a.total - b.total);
+
+            // Analysis
+            const marketAvg = processed.reduce((acc, s) => acc + s.total, 0) / processed.length;
+            const deltaPercent = ((myLimit - marketAvg) / marketAvg * 100).toFixed(1);
+            const winner = processed[0];
+
+            // UI Updates
+            document.getElementById('winnerName').innerText = winner.name;
+            document.getElementById('winnerTotal').innerText = `$${winner.total}`;
+            document.getElementById('marketDelta').innerText = `${deltaPercent > 0 ? '+' : ''}${deltaPercent}% vs Mkt`;
+
+            renderTrend(myLimit);
+            renderSpectrum(processed, myLimit);
+            renderBar(processed);
+            renderScatter(processed, myLimit);
+        }
+
+        function renderTrend(limit) {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            if (trendChart) trendChart.destroy();
+            trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: historicalData.years,
+                    datasets: [
+                        { label: 'Your Offer Price', data: Array(5).fill(limit), borderColor: '#6366f1', borderWidth: 4, borderDash: [5,5], pointRadius: 0, fill: false, order: 0 },
+                        { label: 'DDP (Regional Land)', data: historicalData.DDP, borderColor: '#10b981', tension: 0.3 },
+                        { label: 'FOB (Sea Freight)', data: historicalData.FOB, borderColor: '#f59e0b', tension: 0.3 },
+                        { label: 'EXW (Manufacturer)', data: historicalData.EXW, borderColor: '#ef4444', tension: 0.3 },
+                        { label: 'DAP (Truck/Air)', data: historicalData.DAP, borderColor: '#3b82f6', tension: 0.3 }
+                    ]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { datalabels: { display: false }, legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10, weight: 'bold' } } } },
+                    scales: { y: { title: { display: true, text: 'Landed Cost ($)' } } }
+                }
+            });
+        }
+
+        function renderSpectrum(data, limit) {
+            const ctx = document.getElementById('spectrumChart').getContext('2d');
+            if (spectrumChart) spectrumChart.destroy();
+            spectrumChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        { label: 'Offer', data: [{x: limit, y: 0}, {x: limit, y: 2}], type: 'line', borderColor: '#6366f1', borderWidth: 3, pointRadius: 0 },
+                        { 
+                            label: 'Market', 
+                            data: data.map(s => ({ x: s.total, y: 1, n: s.name })), 
+                            backgroundColor: data.map(s => s.isUnder ? '#10b981' : '#ef4444'), 
+                            pointRadius: 12,
+                            datalabels: { align: 'top', formatter: (v) => v.n, font: { size: 9, weight: 'bold' } }
+                        }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { display: false }, x: { title: { display: true, text: 'Total Price ($)' } } }, plugins: { legend: { display: false } } }
+            });
+        }
+
+        function renderBar(data) {
+            const ctx = document.getElementById('barChart').getContext('2d');
+            if (barChart) barChart.destroy();
+            barChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(s => s.name),
+                    datasets: [
+                        { label: 'Item', data: data.map(s => s.price), backgroundColor: '#3b82f6', stack: 'a' },
+                        { label: 'Ship', data: data.map(s => s.delivery), backgroundColor: '#f59e0b', stack: 'a' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { datalabels: { display: false }, legend: { display: false } } }
+            });
+        }
+
+        function renderScatter(data, limit) {
+            const ctx = document.getElementById('scatterChart').getContext('2d');
+            if (scatterChart) scatterChart.destroy();
+            scatterChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        { label: 'Limit', data: [{x:0, y:limit}, {x:5, y:limit}], type: 'line', borderColor: '#6366f1', pointRadius: 0 },
+                        { 
+                            data: data.map(s => ({ x: s.proximity, y: s.total, n: s.name })), 
+                            backgroundColor: data.map(s => s.isUnder ? '#10b981' : '#ef4444'), 
+                            pointRadius: 10 
+                        }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { min: 0, max: 5, title: { display: true, text: 'Baku Distance (Left=Closest)' } } }, plugins: { legend: { display: false }, datalabels: { display: false } } }
+            });
+        }
+
+        updateAll();
+    </script>
+</body>
+</html>
