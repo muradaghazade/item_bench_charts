@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Single Item Benchmarking Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial; background:#f5f6fa; margin:20px; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+    .card { background:white; padding:20px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05);} 
+    h3 { margin-bottom:10px; }
+    .full { grid-column: span 2; }
+    .filters { display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+    select { padding:6px 10px; border-radius:8px; border:1px solid #ddd; }
+  </style>
+</head>
+<body>
+
+<h2>Single Item Benchmarking Dashboard</h2>
+
+<!-- GLOBAL USEFUL FILTERS (only high-impact) -->
+<div class="filters">
+  <select id="regionFilter">
+    <option value="all">All Regions</option>
+    <option value="eu">Europe</option>
+    <option value="asia">Asia</option>
+  </select>
+
+  <select id="timeFilter">
+    <option value="1y">Last 1 Year</option>
+    <option value="3y">Last 3 Years</option>
+    <option value="5y">Last 5 Years</option>
+  </select>
+
+  <select id="sourceFilter">
+    <option value="all">All Sources</option>
+    <option value="po">PO History</option>
+    <option value="market">Market</option>
+  </select>
+</div>
+
+<div class="grid">
+
+  <!-- 1. Offer Valuation -->
+  <div class="card">
+    <h3>Offer Valuation</h3>
+    <div class="filters">
+      <select id="currencyFilter">
+        <option>AZN</option>
+        <option>USD</option>
+        <option>EUR</option>
+      </select>
+    </div>
+    <canvas id="offerChart"></canvas>
+  </div>
+
+  <!-- 2. Product Price -->
+  <div class="card">
+    <h3>Product Price Chart</h3>
+    <canvas id="priceChart"></canvas>
+  </div>
+
+  <!-- 3. Product Annual Spend -->
+  <div class="card">
+    <h3>Product Annual Spend</h3>
+    <canvas id="spendChart"></canvas>
+  </div>
+
+  <!-- 4. Incoterm -->
+  <div class="card">
+    <h3>Trend by Incoterm</h3>
+    <div class="filters">
+      <select id="incotermFilter">
+        <option value="all">All</option>
+        <option value="CIF">CIF</option>
+        <option value="EXW">EXW</option>
+        <option value="FOB">FOB</option>
+      </select>
+    </div>
+    <canvas id="incotermChart"></canvas>
+  </div>
+
+  <!-- 5. Category -->
+  <div class="card">
+    <h3>Category Price Trend</h3>
+    <div class="filters">
+      <select id="categoryFilter">
+        <option value="top10">Top 10</option>
+        <option value="top5">Top 5</option>
+      </select>
+    </div>
+    <canvas id="categoryChart"></canvas>
+  </div>
+
+  <!-- 6. Vendor -->
+  <div class="card">
+    <h3>Vendor Spend Trend</h3>
+    <div class="filters">
+      <select id="vendorFilter">
+        <option value="all">All Vendors</option>
+        <option value="top5">Top 5</option>
+      </select>
+    </div>
+    <canvas id="vendorChart"></canvas>
+  </div>
+
+</div>
+
+<script>
+
+// Offer Valuation
+new Chart(document.getElementById('offerChart'), {
+  type: 'bar',
+  data: {
+    labels: [''],
+    datasets: [
+      { label: 'Min', data: [80] },
+      { label: 'Average', data: [110] },
+      { label: 'Benchmark', data: [130] },
+      { label: 'Your Offer', data: [95] }
+    ]
+  },
+  options: { indexAxis: 'y' }
+});
+
+// Product Price
+new Chart(document.getElementById('priceChart'), {
+  type: 'line',
+  data: {
+    labels: ['2019','2020','2021','2022','2023'],
+    datasets: [
+      { label:'PO Price', data:[90,100,120,110,105] },
+      { label:'AI Price', data:[95,105,115,108,102], borderDash:[5,5] },
+      { label:'Offer Price', data:[95,95,95,95,95] }
+    ]
+  }
+});
+
+// Annual Spend
+new Chart(document.getElementById('spendChart'), {
+  data: {
+    labels:['2019','2020','2021','2022'],
+    datasets:[
+      { type:'bar', label:'Spend', data:[500,800,700,900] },
+      { type:'line', label:'Trend', data:[500,800,700,900] }
+    ]
+  }
+});
+
+// Incoterm
+new Chart(document.getElementById('incotermChart'), {
+  type: 'bar',
+  data: {
+    labels:['2019','2020','2021','2022'],
+    datasets:[
+      { label:'CIF', data:[100,120,130,125] },
+      { label:'EXW', data:[90,110,120,115] },
+      { label:'FOB', data:[95,115,125,120] }
+    ]
+  }
+});
+
+// Category
+new Chart(document.getElementById('categoryChart'), {
+  type: 'line',
+  data: {
+    labels:['2019','2020','2021','2022'],
+    datasets:[
+      { label:'Electronics', data:[100,120,140,130] },
+      { label:'Mechanical', data:[100,110,120,115] }
+    ]
+  }
+});
+
+// Vendor
+new Chart(document.getElementById('vendorChart'), {
+  type: 'bar',
+  data: {
+    labels:['2019','2020','2021','2022'],
+    datasets:[
+      { label:'Vendor A', data:[200,300,400,350] },
+      { label:'Vendor B', data:[150,250,300,200] },
+      { label:'Vendor C', data:[100,200,250,220] }
+    ]
+  },
+  options: {
+    scales: { x: { stacked: true }, y: { stacked: true } }
+  }
+});
+
+</script>
+
+</body>
+</html>
