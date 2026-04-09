@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Murad's Advanced Procurement Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+</head>
+<body class="bg-slate-50 min-h-screen p-4 md:p-8 font-sans text-slate-900">
+
+    <div class="max-w-7xl mx-auto space-y-6">
+        <header class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+            <div class="space-y-1">
+                <h1 class="text-3xl font-black tracking-tight text-slate-900 uppercase italic">Market Intelligence</h1>
+                <p class="text-slate-500 font-medium">Destination: <span class="text-slate-800 font-bold">Baku</span> | Multi-Modal Analysis</p>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-4">
+                
+                <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 flex gap-4 shadow-inner">
+                    <div>
+                        <label class="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-1">Target Price ($)</label>
+                        <div class="flex items-center">
+                            <span class="text-xl font-black text-indigo-600 mr-1">$</span>
+                            <input type="number" id="offerInput" value="340" oninput="updateAll()" class="w-20 bg-transparent border-none font-mono font-black text-2xl text-indigo-600 outline-none p-0">
+                        </div>
+                    </div>
+                    <div class="w-px bg-indigo-200"></div>
+                    <div>
+                        <label class="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-1">Max Lead Time</label>
+                        <div class="flex items-center">
+                            <input type="number" id="timeInput" value="15" oninput="updateAll()" class="w-16 bg-transparent border-none font-mono font-black text-2xl text-indigo-600 outline-none p-0 text-right">
+                            <span class="text-sm font-bold text-indigo-600 ml-1 mt-1">Days</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm min-w-[160px]">
+                    <span class="text-[9px] font-black uppercase tracking-tighter text-slate-400 block mb-1">Price Buffer</span>
+                    <div id="negotiationValue" class="text-xl font-mono font-black">--%</div>
+                    <p id="negotiationText" class="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tight">vs Cheapest Mkt</p>
+                </div>
+
+                <div id="decisionCard" class="bg-slate-900 text-white p-5 rounded-2xl shadow-xl min-w-[280px] relative overflow-hidden group">
+                    <div class="relative z-10">
+                        <span class="text-[9px] font-black uppercase tracking-tighter bg-emerald-500 text-emerald-950 px-2 py-0.5 rounded">Best Qualifying Route</span>
+                        <h2 id="winnerName" class="text-lg font-bold mt-2">--</h2>
+                        <div class="flex justify-between items-baseline mt-1">
+                            <span id="winnerTotal" class="text-3xl font-mono font-black text-emerald-400">--</span>
+                            <div class="text-right">
+                                <p id="winnerTime" class="text-xs font-mono font-bold text-white">-- Days</p>
+                                <p id="winnerMode" class="text-[9px] opacity-60 uppercase font-bold leading-none">Via Mode</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                <div>
+                    <h3 class="font-black text-slate-800 text-xl uppercase tracking-tight">5-Year Incoterm Evolution</h3>
+                </div>
+            </div>
+            <div class="h-[250px] w-full"><canvas id="trendChart"></canvas></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 relative overflow-hidden">
+                <h3 class="font-bold text-slate-800 mb-2">Logistics Matrix: Time vs. Cost</h3>
+                <p class="text-xs text-slate-500 mb-4">Find suppliers in the bottom-left "Magic Quadrant" (Under budget & On time).</p>
+                
+                <div class="flex gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 justify-end">
+                    <span class="flex items-center gap-1">🟢 Air</span>
+                    <span class="flex items-center gap-1">🟦 Truck</span>
+                    <span class="flex items-center gap-1">🔺 Sea/Rail</span>
+                </div>
+                
+                <div class="h-[350px]"><canvas id="scatterChart"></canvas></div>
+            </div>
+
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                <h3 class="font-bold text-slate-800 mb-4">Cost Structure: Base vs. Logistics</h3>
+                <div class="h-[350px]"><canvas id="barChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <table class="w-full text-left text-sm">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-[10px] font-black tracking-widest">
+                        <th class="px-6 py-4">Supplier & Origin</th>
+                        <th class="px-4 py-4">Transport Mode</th>
+                        <th class="px-4 py-4">Lead Time</th>
+                        <th class="px-4 py-4">Terms</th>
+                        <th class="px-4 py-4">Total Cost</th>
+                        <th class="px-6 py-4 text-right">Qualification Status</th>
+                    </tr>
+                </thead>
+                <tbody id="tableRows" class="divide-y divide-slate-100"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        Chart.register(ChartDataLabels);
+
+        // --- NEW DATASET WITH TRANSIT TIMES AND MODES ---
+        const marketData = [
+            { name: "Caucasus Perf.", region: "Georgia", mode: "Truck", transitDays: 3, price: 320, delivery: 15, term: "DDP" },
+            { name: "Anatolia Spares", region: "Turkey", mode: "Truck", transitDays: 6, price: 290, delivery: 35, term: "DAP" },
+            { name: "Bavarian Tuning", region: "Germany", mode: "Truck", transitDays: 14, price: 325, delivery: 45, term: "EXW" },
+            { name: "Shenzhen Aero (Sea)", region: "China", mode: "Sea+Rail", transitDays: 45, price: 240, delivery: 50, term: "FOB" },
+            { name: "Shenzhen Aero (Air)", region: "China", mode: "Air Freight", transitDays: 5, price: 240, delivery: 130, term: "FCA" },
+            { name: "Liberty Customs", region: "USA", mode: "Air Freight", transitDays: 8, price: 215, delivery: 180, term: "CIP" }
+        ];
+
+        const historicalData = {
+            years: ['2022', '2023', '2024', '2025', '2026'],
+            DDP: [290, 310, 325, 330, 335],
+            FOB: [240, 410, 380, 355, 350],
+            EXW: [300, 320, 350, 375, 390],
+            DAP: [310, 315, 320, 325, 325]
+        };
+
+        let trendChart, scatterChart, barChart;
+
+        function getPointStyle(mode) {
+            if(mode.includes('Air')) return 'circle';
+            if(mode.includes('Truck')) return 'rect';
+            return 'triangle';
+        }
+
+        function updateAll() {
+            const limitPrice = parseFloat(document.getElementById('offerInput').value) || 0;
+            const limitTime = parseFloat(document.getElementById('timeInput').value) || 0;
+
+            const processed = marketData.map(s => {
+                const total = s.price + s.delivery;
+                const isPriceOk = total <= limitPrice;
+                const isTimeOk = s.transitDays <= limitTime;
+                return {
+                    ...s,
+                    total: total,
+                    isPriceOk: isPriceOk,
+                    isTimeOk: isTimeOk,
+                    isFullyQualified: isPriceOk && isTimeOk
+                };
+            }).sort((a, b) => a.total - b.total); // Sort by lowest price first
+
+            // Find absolute cheapest for negotiation buffer
+            const minMarketPrice = processed[0].total;
+            const negBuffer = (((limitPrice - minMarketPrice) / limitPrice) * 100).toFixed(1);
+            const negElement = document.getElementById('negotiationValue');
+            const negText = document.getElementById('negotiationText');
+            
+            negElement.innerText = `${negBuffer}%`;
+            if(negBuffer >= 0) {
+                negElement.className = "text-xl font-mono font-black text-emerald-500";
+                negText.innerText = "Buffer Available";
+            } else {
+                negElement.className = "text-xl font-mono font-black text-rose-500";
+                negText.innerText = "Below Best Price";
+            }
+
+            // Find the Winner (Cheapest option that is BOTH under budget and under time limit)
+            const qualifiedOptions = processed.filter(s => s.isFullyQualified);
+            const winner = qualifiedOptions.length > 0 ? qualifiedOptions[0] : null;
+
+            if(winner) {
+                document.getElementById('decisionCard').className = "bg-slate-900 text-white p-5 rounded-2xl shadow-xl min-w-[280px] relative overflow-hidden";
+                document.getElementById('winnerName').innerText = winner.name;
+                document.getElementById('winnerTotal').innerText = `$${winner.total}`;
+                document.getElementById('winnerTime').innerText = `${winner.transitDays} Days`;
+                document.getElementById('winnerMode').innerText = `Via ${winner.mode}`;
+            } else {
+                document.getElementById('decisionCard').className = "bg-rose-900 text-white p-5 rounded-2xl shadow-xl min-w-[280px] relative overflow-hidden";
+                document.getElementById('winnerName').innerText = "NO VALID OPTIONS";
+                document.getElementById('winnerTotal').innerText = "--";
+                document.getElementById('winnerTime').innerText = "Adjust limits";
+                document.getElementById('winnerMode').innerText = "";
+            }
+
+            // Table update
+            const tbody = document.getElementById('tableRows');
+            tbody.innerHTML = '';
+            processed.forEach(s => {
+                const isWinner = winner && s.name === winner.name;
+                
+                // Determine Status Message
+                let statusMsg = '';
+                let statusColor = '';
+                if(s.isFullyQualified) { statusMsg = '✓ Qualified'; statusColor = 'bg-emerald-100 text-emerald-700'; }
+                else if(!s.isPriceOk && !s.isTimeOk) { statusMsg = '✕ Too Expensive & Slow'; statusColor = 'bg-rose-100 text-rose-700'; }
+                else if(!s.isPriceOk) { statusMsg = '✕ Over Budget'; statusColor = 'bg-orange-100 text-orange-700'; }
+                else if(!s.isTimeOk) { statusMsg = '✕ Too Slow'; statusColor = 'bg-amber-100 text-amber-700'; }
+
+                tbody.innerHTML += `
+                    <tr class="${isWinner ? 'bg-indigo-50/50' : ''} hover:bg-slate-50 transition-all">
+                        <td class="px-6 py-4"><div class="font-bold text-slate-800">${s.name}</div><div class="text-[10px] text-slate-400">${s.region}</div></td>
+                        <td class="px-4 py-4 text-xs font-bold text-slate-600">${s.mode}</td>
+                        <td class="px-4 py-4 font-mono text-sm ${s.isTimeOk ? 'text-slate-800' : 'text-rose-500'}">${s.transitDays}d</td>
+                        <td class="px-4 py-4"><span class="bg-white border border-slate-200 text-slate-500 px-2 py-0.5 rounded text-[10px] font-black">${s.term}</span></td>
+                        <td class="px-4 py-4 font-black text-slate-900 font-mono text-base ${s.isPriceOk ? '' : 'text-rose-500'}">$${s.total}</td>
+                        <td class="px-6 py-4 text-right"><span class="px-3 py-1 rounded text-[10px] font-black uppercase ${statusColor}">${statusMsg}</span></td>
+                    </tr>`;
+            });
+
+            renderTrend(limitPrice);
+            renderMatrix(processed, limitPrice, limitTime);
+            renderBar(processed);
+        }
+
+        function renderTrend(limit) {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            if (trendChart) trendChart.destroy();
+            trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: historicalData.years,
+                    datasets: [
+                        { label: 'Budget Ceiling', data: Array(5).fill(limit), borderColor: '#6366f1', borderWidth: 2, borderDash: [5,5], pointRadius: 0, fill: false },
+                        { label: 'DDP (Regional Land)', data: historicalData.DDP, borderColor: '#10b981', tension: 0.3 },
+                        { label: 'FOB (Sea Freight)', data: historicalData.FOB, borderColor: '#f59e0b', tension: 0.3 },
+                        { label: 'EXW (Manufacturer)', data: historicalData.EXW, borderColor: '#ef4444', tension: 0.3 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false }, legend: { position: 'right' } } }
+            });
+        }
+
+        // NEW COST-TIME MATRIX CHART
+        function renderMatrix(data, priceLimit, timeLimit) {
+            const ctx = document.getElementById('scatterChart').getContext('2d');
+            if (scatterChart) scatterChart.destroy();
+            
+            // Map data to chart points
+            const chartPoints = data.map(s => ({
+                x: s.transitDays, 
+                y: s.total, 
+                n: s.name, 
+                shape: getPointStyle(s.mode),
+                isWin: s.isFullyQualified
+            }));
+
+            scatterChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        // Price Limit Line (Horizontal)
+                        { data: [{x:0, y:priceLimit}, {x:60, y:priceLimit}], type:'line', borderColor:'#6366f1', borderWidth: 2, borderDash:[5,5], pointRadius:0, label: 'Max Budget' },
+                        // Time Limit Line (Vertical)
+                        { data: [{x:timeLimit, y:0}, {x:timeLimit, y:600}], type:'line', borderColor:'#8b5cf6', borderWidth: 2, borderDash:[5,5], pointRadius:0, label: 'Max Days' },
+                        // The Data Points
+                        { 
+                            label: 'Suppliers',
+                            data: chartPoints, 
+                            backgroundColor: chartPoints.map(p => p.isWin ? '#10b981' : '#f43f5e'), 
+                            pointStyle: chartPoints.map(p => p.shape),
+                            pointRadius: 10,
+                            pointHoverRadius: 14
+                        }
+                    ]
+                },
+                options: { 
+                    maintainAspectRatio: false, 
+                    scales: { 
+                        x: { 
+                            title: { display: true, text: 'Transit Time (Days)', font: {weight: 'bold'} },
+                            min: 0, max: 50
+                        }, 
+                        y: { 
+                            title: { display: true, text: 'Total Cost ($)', font: {weight: 'bold'} },
+                            min: 200, max: 450
+                        } 
+                    }, 
+                    plugins: { 
+                        legend: { display: false }, 
+                        datalabels: { display: false },
+                        tooltip: { callbacks: { label: (c) => `${c.raw.n || c.dataset.label}: $${c.raw.y} / ${c.raw.x} Days` } }
+                    } 
+                }
+            });
+        }
+
+        function renderBar(data) {
+            const ctx = document.getElementById('barChart').getContext('2d');
+            if (barChart) barChart.destroy();
+            barChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(s=>s.name),
+                    datasets: [
+                        { label:'Item', data:data.map(s=>s.price), backgroundColor:'#3b82f6', stack:'a' }, 
+                        { label:'Transport', data:data.map(s=>s.delivery), backgroundColor:'#f59e0b', stack:'a' }
+                    ]
+                },
+                options: { maintainAspectRatio:false, scales:{ x:{stacked:true}, y:{stacked:true} }, plugins:{legend:{position: 'bottom'}, datalabels:{display:false}} }
+            });
+        }
+
+        updateAll();
+    </script>
+</body>
+</html>
