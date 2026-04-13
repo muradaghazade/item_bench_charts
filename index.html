@@ -3,10 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Procurement Dashboard v21</title>
+    <title>Master Procurement Dashboard v25</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
 <body class="bg-slate-50 min-h-screen p-4 md:p-8 font-sans text-slate-900">
 
@@ -15,119 +19,100 @@
         <header class="relative bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="absolute top-0 right-0 -mt-4 -mr-4 w-48 h-48 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full blur-3xl opacity-40 pointer-events-none"></div>
 
-            <div class="p-6 md:p-8 flex flex-col xl:flex-row xl:items-center justify-between gap-8 relative z-10">
+            <div class="p-6 flex flex-col xl:flex-row xl:items-start justify-between gap-6 relative z-10">
                 
-                <div class="flex items-center gap-5 md:gap-6">
-                    <div class="flex items-center justify-center h-14 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-slate-100 px-5 shrink-0 transition-transform hover:scale-105">
-                        <img src="./DMP Service Logo.svg" alt="DMP Service" class="h-8 w-auto object-contain">
-                    </div>
-                    
-                    <div class="w-px h-10 bg-slate-200 hidden sm:block"></div>
-
-                    <div>
-                        <h1 class="text-xl md:text-2xl font-black tracking-tight text-slate-800 uppercase italic leading-none mb-1.5">Benchmarking</h1>
-                        <div class="flex items-center gap-2">
-                            <span class="flex h-2.5 w-2.5 relative">
-                              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                            </span>
-                            <p class="text-[10px] md:text-xs text-slate-500 font-bold tracking-widest uppercase">Destination: <span class="text-slate-800 font-black">Baku, AZ</span></p>
+                <div class="flex flex-col gap-5 shrink-0">
+                    <div class="flex items-center gap-5">
+                        <div class="flex items-center justify-center h-14 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-slate-100 px-5 shrink-0 transition-transform hover:scale-105 w-fit">
+                            <img src="./DMP Service Logo.svg" alt="DMP Service" class="h-8 w-auto object-contain">
                         </div>
+                        <div class="w-px h-12 bg-slate-200 hidden md:block"></div>
+                        <div>
+                            <h1 class="text-xl md:text-2xl font-black tracking-tight text-slate-800 uppercase italic leading-none mb-1.5">Benchmarking</h1>
+                            <div class="flex items-center gap-2">
+                                <span class="flex h-2.5 w-2.5 relative">
+                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                  <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                                </span>
+                                <p class="text-[10px] md:text-xs text-slate-500 font-bold tracking-widest uppercase">Destination: <span class="text-slate-800 font-black">Baku, AZ</span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex bg-slate-100 p-1 rounded-lg w-fit border border-slate-200/60 shadow-inner">
+                        <button onclick="setSource('All')" id="src-All" class="src-btn bg-white shadow-sm text-slate-800 px-3 py-1.5 rounded-md text-[10px] font-bold transition-all">All Data</button>
+                        <button onclick="setSource('Market')" id="src-Market" class="src-btn text-slate-500 hover:text-slate-800 px-3 py-1.5 rounded-md text-[10px] font-bold transition-all">Live Market</button>
+                        <button onclick="setSource('PO')" id="src-PO" class="src-btn text-slate-500 hover:text-slate-800 px-3 py-1.5 rounded-md text-[10px] font-bold transition-all">Historical POs</button>
                     </div>
                 </div>
 
-                <div class="flex flex-col lg:flex-row items-stretch lg:items-center gap-5">
-
-                    <div class="flex flex-row items-center bg-slate-50 p-1.5 rounded-2xl border border-slate-200/80 shadow-inner">
+                <div class="flex flex-col lg:flex-row items-stretch lg:items-start gap-5 flex-1 w-full xl:w-auto overflow-hidden">
+                    
+                    <div class="flex items-center gap-3 overflow-x-auto hide-scrollbar pb-2" id="offersContainer">
                         
-                        <div class="px-4 py-2 hover:bg-white rounded-xl transition-all duration-200 group cursor-text" onclick="document.getElementById('offerInput').focus()">
-                            <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Offer Price</label>
-                            <div class="flex items-baseline gap-0.5">
-                                <span class="text-lg font-black text-indigo-400">$</span>
-                                <input type="number" id="offerInput" value="340" oninput="updateAll()" class="w-16 bg-transparent border-none font-mono font-black text-2xl text-slate-800 outline-none p-0 focus:ring-0 transition-all">
-                            </div>
-                        </div>
-
-                        <div class="w-px h-10 bg-slate-200 mx-1"></div>
-
-                        <div class="px-4 py-2 hover:bg-white rounded-xl transition-all duration-200 relative">
-                            <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Terms</label>
-                            <select id="incotermInput" onchange="updateAll()" class="bg-transparent border-none font-mono font-black text-2xl text-slate-800 outline-none p-0 cursor-pointer focus:ring-0 appearance-none pr-4">
-                                <option value="EXW">EXW</option>
-                                <option value="FCA" selected>FCA</option>
-                                <option value="FOB">FOB</option>
-                                <option value="CIP">CIP</option>
-                                <option value="DAP">DAP</option>
-                                <option value="DDP">DDP</option>
-                            </select>
-                            <div class="absolute right-3 bottom-3 pointer-events-none text-indigo-400">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
-                        </div>
-
-                        <div class="w-px h-10 bg-slate-200 mx-1"></div>
-
-                        <div class="px-4 py-2 hover:bg-white rounded-xl transition-all duration-200 group cursor-text" onclick="document.getElementById('timeInput').focus()">
-                            <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Max Lead</label>
-                            <div class="flex items-baseline gap-1">
-                                <input type="number" id="timeInput" value="15" oninput="updateAll()" class="w-12 bg-transparent border-none font-mono font-black text-2xl text-slate-800 outline-none p-0 focus:ring-0 text-right transition-all">
-                                <span class="text-sm font-bold text-slate-400">d</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-4">
-                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center min-w-[120px] relative overflow-hidden">
-                            <div id="negBg" class="absolute inset-0 opacity-5 transition-colors duration-500"></div>
-                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 relative z-10">for Negotiation</span>
-                            <div id="negotiationValue" class="text-2xl font-mono font-black relative z-10 mt-0.5">--%</div>
-                            <p class="text-[9px] font-bold text-slate-400 relative z-10 uppercase tracking-tight mt-0.5">vs Market</p>
-                        </div>
-
-                        <div id="decisionCard" class="bg-slate-900 text-white p-4 rounded-2xl shadow-xl min-w-[260px] relative overflow-hidden group flex flex-col justify-center">
-                            <div class="absolute -top-12 -right-12 w-40 h-40 bg-emerald-500 rounded-full blur-[40px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 pointer-events-none"></div>
-
-                            <div class="relative z-10 flex justify-between items-start mb-2">
-                                <span class="text-[9px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">Top Route</span>
-                                <span id="winnerTime" class="text-[10px] font-mono font-bold text-slate-300 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700 flex items-center gap-1 backdrop-blur-sm">
-                                    <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    --
-                                </span>
-                            </div>
-                            <div class="relative z-10">
-                                <h2 id="winnerName" class="text-lg font-bold text-white truncate mb-0.5 leading-tight">--</h2>
-                                <div class="flex items-baseline gap-2">
-                                    <span id="winnerTotal" class="text-3xl font-mono font-black text-emerald-400 leading-none tracking-tight">--</span>
-                                    <span id="winnerTermBadge" class="text-[10px] font-black tracking-widest text-slate-400 uppercase bg-slate-800 px-1.5 py-0.5 rounded"></span>
+                        <div class="offer-row flex flex-row items-center bg-slate-50 p-1.5 rounded-2xl border border-slate-200/80 shadow-inner relative group shrink-0 transition-all">
+                            <div class="px-4 py-2 hover:bg-white rounded-xl transition-all duration-200 cursor-text" onclick="this.querySelector('input').focus()">
+                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Price</label>
+                                <div class="flex items-baseline gap-0.5">
+                                    <span class="text-sm font-black text-indigo-400">$</span>
+                                    <input type="number" value="340" oninput="updateAll()" class="offer-price w-14 bg-transparent border-none font-mono font-black text-xl text-slate-800 outline-none p-0 focus:ring-0">
                                 </div>
                             </div>
+                            <div class="w-px h-8 bg-slate-200 mx-1"></div>
+                            <div class="px-3 py-2 hover:bg-white rounded-xl transition-all duration-200 relative">
+                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Term</label>
+                                <select onchange="updateAll()" class="offer-term bg-transparent border-none font-mono font-black text-xl text-slate-800 outline-none p-0 cursor-pointer focus:ring-0 appearance-none pr-4">
+                                    <option value="EXW">EXW</option>
+                                    <option value="FCA" selected>FCA</option>
+                                    <option value="FOB">FOB</option>
+                                    <option value="CIP">CIP</option>
+                                    <option value="DAP">DAP</option>
+                                    <option value="DDP">DDP</option>
+                                </select>
+                                <div class="absolute right-1 bottom-3.5 pointer-events-none text-indigo-400">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                            </div>
+                            <div class="w-px h-8 bg-slate-200 mx-1"></div>
+                            <div class="px-3 py-2 hover:bg-white rounded-xl transition-all duration-200 cursor-text" onclick="this.querySelector('input').focus()">
+                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Lead</label>
+                                <div class="flex items-baseline gap-0.5">
+                                    <input type="number" value="15" oninput="updateAll()" class="offer-time w-10 bg-transparent border-none font-mono font-black text-xl text-slate-800 outline-none p-0 focus:ring-0 text-right">
+                                    <span class="text-sm font-bold text-slate-400">d</span>
+                                </div>
+                            </div>
+                            
+                            <button onclick="removeOffer(this)" class="remove-offer-btn hidden absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5 items-center justify-center shadow-md hover:bg-rose-600 transition-colors z-10 text-xs font-black">×</button>
                         </div>
+
+                        <button id="addOfferBtn" onclick="addOffer()" class="flex flex-col items-center justify-center bg-white hover:bg-indigo-50 text-indigo-600 border border-indigo-200 border-dashed rounded-2xl px-4 py-2 font-bold text-sm transition-colors h-[64px] shadow-sm shrink-0">
+                            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            <span class="text-[9px] uppercase tracking-widest">Add</span>
+                        </button>
                     </div>
 
+                    <div class="flex gap-4 shrink-0">
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center min-w-[110px] relative overflow-hidden">
+                            <div id="negBg" class="absolute inset-0 opacity-5 transition-colors duration-500"></div>
+                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 relative z-10">Max Leverage</span>
+                            <div id="negotiationValue" class="text-2xl font-mono font-black relative z-10 mt-0.5">--%</div>
+                            <p class="text-[9px] font-bold text-slate-400 relative z-10 uppercase tracking-tight mt-0.5">vs Benchmark</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
 
         <div id="negotiationWidget" class="hidden">
-            <div class="flex items-center gap-6">
-                <div id="nwIcon" class="p-3 rounded-full bg-indigo-100 text-indigo-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-                </div>
-                <div>
-                    <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">Your Negotiation Target</p>
-                    <div class="flex items-center gap-3">
-                        <span id="nwCurrentOffer" class="text-lg font-semibold text-slate-400 line-through decoration-slate-400">--</span>
-                        <span class="font-black text-xl text-indigo-400">➔</span>
-                        <span id="nwTargetOffer" class="text-3xl font-black text-indigo-700">--</span>
+            <div class="flex flex-col lg:flex-row gap-6 bg-indigo-50 border border-indigo-200 shadow-sm rounded-2xl p-6 relative overflow-hidden">
+                <div class="flex flex-col items-center justify-center shrink-0 w-32 border-r border-indigo-200/60 pr-6">
+                    <div class="p-3 rounded-full bg-indigo-100 text-indigo-600 mb-2">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                     </div>
+                    <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest text-center leading-tight">Scenario Analysis</p>
                 </div>
-            </div>
-            
-            <div class="flex flex-col items-end gap-2">
-                <div class="bg-white/80 border border-slate-200 rounded-xl p-4 text-sm min-w-[320px] shadow-sm">
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 border-b border-slate-200 pb-1">Negotiation Space</p>
-                    <div id="nwProof" class="space-y-2 text-slate-700"></div>
-                </div>
+                <div id="nwProof" class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    </div>
             </div>
         </div>
 
@@ -155,15 +140,21 @@
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col w-full">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-4">
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col w-full overflow-hidden">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-4 gap-4 relative z-20">
                 <div>
                     <h3 class="font-black text-slate-800 text-xl uppercase tracking-tight">The Price Spectrum</h3>
-                    <p class="text-xs text-slate-500">Visualize your offer vs market pricing.</p>
+                    <p class="text-xs text-slate-500">Timeline visualization of offers vs market floor/ceiling.</p>
                 </div>
-                <div class="flex items-center gap-4 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
-                    <div class="flex items-center gap-2 px-2">
-                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Term Filter:</span>
+                
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-3 px-3 py-1.5 bg-slate-50 rounded-xl border border-slate-200">
+                        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-indigo-500 shadow-sm border border-white"></span><span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Your Offers</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-400 shadow-sm border border-white opacity-70"></span><span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Market</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-400 shadow-sm border border-white opacity-70"></span><span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">History</span></div>
+                    </div>
+                    <div class="flex items-center gap-2 px-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Filter:</span>
                         <select id="spectrumFilter" onchange="updateAll()" class="bg-white border border-slate-200 text-xs font-bold text-indigo-600 rounded-md px-2 py-1 outline-none cursor-pointer shadow-sm">
                             <option value="All">All Terms</option>
                             <option value="EXW">EXW</option>
@@ -177,14 +168,20 @@
                 </div>
             </div>
             
-            <div id="spectrumContainer" class="relative w-full h-[180px] my-auto"></div>
+            <div id="spectrumContainer" class="w-full relative mt-12 mb-8 min-h-[140px]"></div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
-                <div class="flex flex-col xl:flex-row xl:items-start justify-between mb-4 gap-4">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col relative overflow-hidden">
+                <div class="flex flex-col xl:flex-row xl:items-start justify-between mb-2 gap-4 relative z-10">
                     <div>
                         <h3 class="font-bold text-slate-800 mb-1">Logistics Matrix: Time vs. Cost</h3>
+                        <div class="flex items-center gap-3 mt-1.5 flex-wrap">
+                            <div class="flex items-center gap-1"><span class="text-indigo-500 text-[14px] leading-none">★</span><span class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Your Offers</span></div>
+                            <div class="w-px h-3 bg-slate-200"></div>
+                            <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-blue-500 opacity-60 border border-blue-500"></span><span class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Market</span></div>
+                            <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 opacity-60 border border-amber-500"></span><span class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">PO</span></div>
+                        </div>
                     </div>
                     <div class="flex bg-slate-100 rounded-lg p-1 shrink-0">
                         <button onclick="setFilter('All')" id="btn-All" class="filter-btn bg-white shadow-sm text-indigo-600 px-3 py-1.5 rounded-md text-[10px] font-bold transition-all">All</button>
@@ -193,21 +190,22 @@
                         <button onclick="setFilter('Sea+Rail')" id="btn-Sea" class="filter-btn text-slate-500 hover:text-slate-800 px-3 py-1.5 rounded-md text-[10px] font-bold transition-all">🚢 Sea/Rail</button>
                     </div>
                 </div>
-                <div class="h-[300px] w-full"><canvas id="scatterChart"></canvas></div>
+                <div class="h-[320px] w-full relative z-10"><canvas id="scatterChart"></canvas></div>
             </div>
 
             <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
                 <div class="mb-4">
-                    <h3 class="font-bold text-slate-800 mb-1">Cost Structure: Base vs. Logistics</h3>
+                    <h3 class="font-black text-slate-800 text-lg uppercase tracking-tight">Offer Valuation</h3>
+                    <p class="text-xs text-slate-500">Your scenario stack compared to key benchmarks.</p>
                 </div>
-                <div class="h-[300px] w-full"><canvas id="barChart"></canvas></div>
+                <div class="h-[300px] w-full"><canvas id="valuationChart"></canvas></div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
                 <div class="mb-4">
-                    <h3 class="font-black text-slate-800 text-lg uppercase tracking-tight">Product Annual Spend</h3>
+                    <h3 class="font-black text-slate-800 text-lg uppercase tracking-tight"> Product Annual Spend</h3>
                     <p class="text-xs text-slate-500">Historical capital deployed for this specific item ($K).</p>
                 </div>
                 <div class="h-[250px] w-full"><canvas id="productSpendChart"></canvas></div>
@@ -215,38 +213,11 @@
 
             <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
                 <div class="mb-4">
-                    <h3 class="font-black text-slate-800 text-lg uppercase tracking-tight">Offer Valuation</h3>
-                    <p class="text-xs text-slate-500">Your offer dynamically compared to key market benchmarks.</p>
-                </div>
-                <div class="h-[250px] w-full"><canvas id="valuationChart"></canvas></div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
-                <div class="mb-4">
-                    <h3 class="font-black text-slate-800 text-lg uppercase tracking-tight">Category Spend - Top 10</h3>
+                    <h3 class="font-black text-slate-800 text-lg uppercase tracking-tight"> Category Spend - Top 10</h3>
                     <p class="text-xs text-slate-500">Highest expenditure macro-categories in the portfolio ($K).</p>
                 </div>
-                <div class="h-[280px] w-full"><canvas id="categoryChart"></canvas></div>
+                <div class="h-[250px] w-full"><canvas id="categoryChart"></canvas></div>
             </div>
-
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
-                <div class="mb-4">
-                    <h3 class="font-black text-slate-800 text-lg uppercase tracking-tight">Vendor Spend Trend</h3>
-                    <p class="text-xs text-slate-500">Quarterly volume distribution among top active suppliers ($K).</p>
-                </div>
-                <div class="h-[280px] w-full"><canvas id="vendorChart"></canvas></div>
-            </div>
-        </div>
-
-        <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
-            <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-                <div>
-                    <h3 class="font-black text-slate-800 text-xl uppercase tracking-tight">5-Year Incoterm Price Evolution</h3>
-                </div>
-            </div>
-            <div class="h-[250px] w-full"><canvas id="trendChart"></canvas></div>
         </div>
 
         <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mt-6">
@@ -271,35 +242,94 @@
 
         const incotermValue = { 'EXW': 1, 'FCA': 2, 'FOB': 3, 'CIP': 4, 'DAP': 5, 'DDP': 6 };
         
-        const marketData = [
-            { name: "Caucasus Perf.", region: "Georgia", mode: "Truck", transitDays: 3, price: 305, delivery: 15, term: "DDP" },
-            { name: "Anatolia Spares", region: "Turkey", mode: "Truck", transitDays: 6, price: 270, delivery: 35, term: "DAP" },
-            { name: "Bavarian Tuning", region: "Germany", mode: "Truck", transitDays: 14, price: 325, delivery: 45, term: "EXW" },
-            { name: "Shenzhen Aero (Sea)", region: "China", mode: "Sea+Rail", transitDays: 45, price: 240, delivery: 50, term: "FOB" },
-            { name: "Shenzhen Aero (Air)", region: "China", mode: "Air Freight", transitDays: 5, price: 240, delivery: 130, term: "FCA" },
-            { name: "Liberty Customs", region: "USA", mode: "Air Freight", transitDays: 8, price: 215, delivery: 180, term: "CIP" }
+        const rawDatabase = [
+            { name: "Caucasus Perf.", region: "Georgia", mode: "Truck", transitDays: 3, price: 305, delivery: 15, term: "DDP", source: "Market" },
+            { name: "Anatolia Spares", region: "Turkey", mode: "Truck", transitDays: 6, price: 270, delivery: 35, term: "DAP", source: "Market" },
+            { name: "Bavarian Tuning", region: "Germany", mode: "Truck", transitDays: 14, price: 325, delivery: 45, term: "EXW", source: "Market" },
+            { name: "Shenzhen Aero (Sea)", region: "China", mode: "Sea+Rail", transitDays: 45, price: 240, delivery: 50, term: "FOB", source: "Market" },
+            { name: "Shenzhen Aero (Air)", region: "China", mode: "Air Freight", transitDays: 5, price: 240, delivery: 130, term: "FCA", source: "Market" },
+            { name: "Liberty Customs", region: "USA", mode: "Air Freight", transitDays: 8, price: 215, delivery: 180, term: "CIP", source: "Market" },
+            { name: "EuroParts Ltd", region: "Germany", mode: "Truck", transitDays: 12, price: 315, delivery: 40, term: "DAP", source: "PO" },
+            { name: "Silk Road Logistics", region: "China", mode: "Sea+Rail", transitDays: 40, price: 230, delivery: 45, term: "FOB", source: "PO" },
+            { name: "Anatolia Spares (2023)", region: "Turkey", mode: "Truck", transitDays: 7, price: 280, delivery: 35, term: "FCA", source: "PO" },
+            { name: "Caucasus Perf. (2024)", region: "Georgia", mode: "Truck", transitDays: 3, price: 310, delivery: 15, term: "DDP", source: "PO" },
+            { name: "Global Air Freight", region: "USA", mode: "Air Freight", transitDays: 7, price: 210, delivery: 200, term: "FCA", source: "PO" },
+            { name: "Shenzhen Aero (2023)", region: "China", mode: "Sea+Rail", transitDays: 45, price: 235, delivery: 45, term: "FOB", source: "PO" },
+            { name: "Bavarian Tuning (2023)", region: "Germany", mode: "Truck", transitDays: 14, price: 310, delivery: 45, term: "EXW", source: "PO" }
         ];
 
-        const historicalData = {
-            years: ['2022', '2023', '2024', '2025', '2026'],
-            DDP: [290, 310, 325, 330, 335],
-            FOB: [240, 410, 380, 355, 350],
-            EXW: [300, 320, 350, 375, 390],
-            DAP: [310, 315, 320, 325, 325]
-        };
-
         const macroSpendData = { years: ['2021', '2022', '2023', '2024', '2025'], amounts: [120, 145, 160, 130, 175] };
-        const macroVendorData = { quarters: ['Q1 24', 'Q2 24', 'Q3 24', 'Q4 24', 'Q1 25'], v1: [30, 40, 35, 50, 45], v2: [20, 25, 30, 25, 35], v3: [50, 45, 40, 60, 55] };
         const macroCategoryData = { labels: ['Custom Comps', 'Standard Spares', 'Fluids & Lubes', 'Electronics', 'Chassis Parts', 'Interior Trims', 'Fasteners', 'Cooling Systems', 'Braking', 'Suspension'], amounts: [850, 620, 410, 380, 310, 250, 190, 150, 120, 90] };
 
-        let scatterChart, barChart, trendChart;
-        let productSpendChart, valuationChart, categoryChart, vendorChart;
+        let scatterChart, valuationChart, productSpendChart, categoryChart;
         let activeModeFilter = 'All';
+        let activeSourceFilter = 'All';
+
+        function updateRemoveButtons() {
+            const rows = document.querySelectorAll('.offer-row');
+            rows.forEach(row => {
+                const btn = row.querySelector('.remove-offer-btn');
+                if (rows.length > 1) {
+                    row.classList.add('group');
+                    btn.classList.replace('hidden', 'group-hover:flex');
+                } else {
+                    row.classList.remove('group');
+                    btn.classList.replace('group-hover:flex', 'hidden');
+                }
+            });
+        }
+
+        function addOffer() {
+            const container = document.getElementById('offersContainer');
+            const addBtn = document.getElementById('addOfferBtn');
+            const firstRow = document.querySelector('.offer-row');
+            const newRow = firstRow.cloneNode(true);
+            
+            const priceInput = newRow.querySelector('.offer-price');
+            priceInput.value = Math.max(200, parseInt(priceInput.value) - 20);
+            
+            container.insertBefore(newRow, addBtn);
+            updateRemoveButtons();
+            container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
+            updateAll();
+        }
+
+        function removeOffer(btn) {
+            const rows = document.querySelectorAll('.offer-row');
+            if(rows.length > 1) {
+                btn.closest('.offer-row').remove();
+                updateRemoveButtons();
+                updateAll();
+            }
+        }
+
+        function getOffers() {
+            return Array.from(document.querySelectorAll('.offer-row')).map((row, index) => {
+                return {
+                    id: `Offer ${index + 1}`,
+                    price: parseFloat(row.querySelector('.offer-price').value) || 0,
+                    term: row.querySelector('.offer-term').value,
+                    time: parseFloat(row.querySelector('.offer-time').value) || 0,
+                    termValue: incotermValue[row.querySelector('.offer-term').value]
+                };
+            });
+        }
 
         function getPointStyle(mode) {
             if(mode.includes('Air')) return 'circle';
             if(mode.includes('Truck')) return 'rect';
             return 'triangle';
+        }
+
+        function setSource(src) {
+            activeSourceFilter = src;
+            document.querySelectorAll('.src-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'shadow-sm', 'text-slate-800');
+                btn.classList.add('text-slate-500');
+            });
+            document.getElementById('src-' + src).classList.remove('text-slate-500');
+            document.getElementById('src-' + src).classList.add('bg-white', 'shadow-sm', 'text-slate-800');
+            updateAll();
         }
 
         function setFilter(mode) {
@@ -334,52 +364,73 @@
         }
 
         function updateAll() {
-            const limitPrice = parseFloat(document.getElementById('offerInput').value) || 0;
-            const limitTime = parseFloat(document.getElementById('timeInput').value) || 0;
-            const limitTerm = document.getElementById('incotermInput').value;
-            const limitTermValue = incotermValue[limitTerm];
+            const offers = getOffers();
+            if (offers.length === 0) return;
 
-            const allProcessed = marketData.map(s => ({
-                ...s,
-                total: s.price + s.delivery,
-                isPriceOk: (s.price + s.delivery) <= limitPrice,
-                isTimeOk: s.transitDays <= limitTime,
-                isFullyQualified: ((s.price + s.delivery) <= limitPrice) && (s.transitDays <= limitTime)
-            })).sort((a, b) => a.total - b.total);
+            const sourceFilteredData = activeSourceFilter === 'All' ? rawDatabase : rawDatabase.filter(s => s.source === activeSourceFilter);
+
+            const allProcessed = sourceFilteredData.map(s => {
+                const total = s.price + s.delivery;
+                const qualifyingOffers = offers.filter(o => total <= o.price && s.transitDays <= o.time);
+                return {
+                    ...s,
+                    total,
+                    isFullyQualified: qualifyingOffers.length > 0
+                };
+            }).sort((a, b) => a.total - b.total);
+
+            if (allProcessed.length === 0) return;
 
             calculateModeSummaries(allProcessed);
 
             const widget = document.getElementById('negotiationWidget');
-            const validByTime = allProcessed.filter(s => s.isTimeOk);
-            validByTime.sort((a,b) => a.total - b.total || incotermValue[b.term] - incotermValue[a.term]);
-            
-            const bestMarket = validByTime.length > 0 ? validByTime[0] : null;
+            const nwProof = document.getElementById('nwProof');
+            nwProof.innerHTML = '';
+            let hasNegotiations = false;
 
-            if (bestMarket) {
-                const priceDiff = limitPrice - bestMarket.total;
-                const termDiff = incotermValue[bestMarket.term] - limitTermValue;
+            offers.forEach((offer, index) => {
+                const validByTime = allProcessed.filter(s => s.transitDays <= offer.time);
+                validByTime.sort((a,b) => a.total - b.total || incotermValue[b.term] - incotermValue[a.term]);
+                const bestMarket = validByTime.length > 0 ? validByTime[0] : null;
 
-                if (priceDiff > 0 || termDiff > 0) {
-                    document.getElementById('nwCurrentOffer').innerText = `$${limitPrice} ${limitTerm}`;
-                    document.getElementById('nwTargetOffer').innerText = `$${bestMarket.total} ${bestMarket.term}`;
-                    
-                    let proofHTML = `To reach the best market offer (${bestMarket.name}), you have space to negotiate:<br/>`;
-                    if (priceDiff > 0) proofHTML += `<div class="flex items-center mt-2"><span class="w-2 h-2 bg-emerald-500 rounded-full mr-2 shrink-0"></span> <strong>$${priceDiff} price reduction.</strong></div>`;
-                    else if (priceDiff < 0) proofHTML += `<div class="flex items-center mt-2"><span class="w-2 h-2 bg-rose-500 rounded-full mr-2 shrink-0"></span> <em>Your price is $${Math.abs(priceDiff)} below the best market floor.</em></div>`;
-                    if (termDiff > 0) proofHTML += `<div class="flex items-center mt-2"><span class="w-2 h-2 bg-indigo-500 rounded-full mr-2 shrink-0"></span> <strong>+${termDiff} levels of Incoterm upgrades</strong> (from ${limitTerm} to ${bestMarket.term}).</div>`;
-                    else if (termDiff < 0) proofHTML += `<div class="flex items-center mt-2"><span class="w-2 h-2 bg-rose-500 rounded-full mr-2 shrink-0"></span> <em>The best market price requires taking on more risk (${bestMarket.term}).</em></div>`;
+                if (bestMarket) {
+                    const priceDiff = offer.price - bestMarket.total;
+                    const termDiff = incotermValue[bestMarket.term] - offer.termValue;
 
-                    document.getElementById('nwProof').innerHTML = proofHTML;
-                    widget.className = "flex flex-col md:flex-row bg-indigo-50 border border-indigo-200 shadow-sm rounded-xl p-6 items-center justify-between gap-6 animate-fade-in";
-                } else {
-                    widget.className = "hidden";
+                    if (priceDiff > 0 || termDiff > 0) {
+                        hasNegotiations = true;
+                        nwProof.innerHTML += `
+                            <div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm hover:shadow-md transition-shadow">
+                                <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
+                                    <div class="flex flex-col">
+                                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Scenario ${index + 1}</span>
+                                        <span class="font-bold text-slate-700">$${offer.price} <span class="text-xs bg-slate-100 px-1 rounded">${offer.term}</span></span>
+                                    </div>
+                                    <span class="text-indigo-300 font-black px-2">➔</span>
+                                    <div class="flex flex-col items-end">
+                                        <span class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Target</span>
+                                        <span class="font-bold text-indigo-700">$${bestMarket.total} <span class="text-xs bg-indigo-100 px-1 rounded">${bestMarket.term}</span></span>
+                                    </div>
+                                </div>
+                                <div class="text-xs space-y-1.5 text-slate-600">
+                                    ${priceDiff > 0 ? `<div class="flex items-center"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-2 shrink-0"></span> <strong>$${priceDiff}</strong> price reduction gap.</div>` : ''}
+                                    ${priceDiff < 0 ? `<div class="flex items-center"><span class="w-1.5 h-1.5 bg-rose-500 rounded-full mr-2 shrink-0"></span> <em>Price is $${Math.abs(priceDiff)} below best benchmark.</em></div>` : ''}
+                                    ${termDiff > 0 ? `<div class="flex items-center"><span class="w-1.5 h-1.5 bg-indigo-500 rounded-full mr-2 shrink-0"></span> <strong>+${termDiff}</strong> Incoterm upgrades available.</div>` : ''}
+                                    ${termDiff < 0 ? `<div class="flex items-center"><span class="w-1.5 h-1.5 bg-rose-500 rounded-full mr-2 shrink-0"></span> <em>Benchmark requires higher risk (${bestMarket.term}).</em></div>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }
                 }
-            } else {
-                widget.className = "hidden";
-            }
+            });
+
+            if(hasNegotiations) widget.classList.remove('hidden');
+            else widget.classList.add('hidden');
 
             const minMarketPrice = allProcessed[0].total;
-            const negBuffer = (((limitPrice - minMarketPrice) / limitPrice) * 100).toFixed(1);
+            const maxOfferPrice = Math.max(...offers.map(o => o.price));
+            const negBuffer = (((maxOfferPrice - minMarketPrice) / maxOfferPrice) * 100).toFixed(1);
+            
             const negElement = document.getElementById('negotiationValue');
             const negBg = document.getElementById('negBg');
 
@@ -393,56 +444,40 @@
             }
 
             const filteredProcessed = activeModeFilter === 'All' ? allProcessed : allProcessed.filter(s => s.mode === activeModeFilter);
-            const qualifiedOptions = filteredProcessed.filter(s => s.isFullyQualified);
-            const winner = qualifiedOptions.length > 0 ? qualifiedOptions[0] : null;
-
-            if(winner) {
-                document.getElementById('decisionCard').className = "bg-slate-900 text-white p-4 rounded-2xl shadow-xl min-w-[260px] relative overflow-hidden group flex flex-col justify-center border border-slate-800";
-                document.getElementById('winnerName').innerText = winner.name;
-                document.getElementById('winnerTotal').innerText = `$${winner.total}`;
-                document.getElementById('winnerTime').innerHTML = `<svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${winner.transitDays}d`;
-                document.getElementById('winnerTermBadge').innerText = winner.term;
-            } else {
-                document.getElementById('decisionCard').className = "bg-rose-950 text-white p-4 rounded-2xl shadow-xl min-w-[260px] relative overflow-hidden group flex flex-col justify-center border border-rose-900";
-                document.getElementById('winnerName').innerText = "NO VALID OPTIONS";
-                document.getElementById('winnerTotal').innerText = "--";
-                document.getElementById('winnerTime').innerText = "Adjust limits";
-                document.getElementById('winnerTermBadge').innerText = "";
-            }
 
             const tbody = document.getElementById('tableRows');
             tbody.innerHTML = '';
             filteredProcessed.forEach(s => {
-                const isWinner = winner && s.name === winner.name;
                 let statusMsg = s.isFullyQualified ? '✓ Qualified' : '✕ Out of Spec';
                 let statusColor = s.isFullyQualified ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700';
 
+                const sourceBadge = s.source === 'Market' ? 
+                    `<span class="bg-blue-50 text-blue-600 border border-blue-200 px-1.5 py-0.5 rounded text-[8px] uppercase tracking-widest font-black ml-2 shrink-0">Market</span>` : 
+                    `<span class="bg-amber-50 text-amber-600 border border-amber-200 px-1.5 py-0.5 rounded text-[8px] uppercase tracking-widest font-black ml-2 shrink-0">History</span>`;
+
                 tbody.innerHTML += `
-                    <tr class="${isWinner ? 'bg-indigo-50/50' : ''} hover:bg-slate-50 transition-all">
-                        <td class="px-6 py-4"><div class="font-bold text-slate-800">${s.name}</div><div class="text-[10px] text-slate-400">${s.region}</div></td>
+                    <tr class="hover:bg-slate-50 transition-all">
+                        <td class="px-6 py-4 flex items-center justify-between">
+                            <div><div class="font-bold text-slate-800">${s.name}</div><div class="text-[10px] text-slate-400">${s.region}</div></div>
+                            ${sourceBadge}
+                        </td>
                         <td class="px-4 py-4 text-xs font-bold text-slate-600">${s.mode}</td>
-                        <td class="px-4 py-4 font-mono text-sm ${s.isTimeOk ? 'text-slate-800' : 'text-rose-500'}">${s.transitDays}d</td>
+                        <td class="px-4 py-4 font-mono text-sm ${s.isFullyQualified ? 'text-slate-800' : 'text-slate-500'}">${s.transitDays}d</td>
                         <td class="px-4 py-4"><span class="bg-white border border-slate-200 text-slate-500 px-2 py-0.5 rounded text-[10px] font-black">${s.term}</span></td>
-                        <td class="px-4 py-4 font-black text-slate-900 font-mono text-base ${s.isPriceOk ? '' : 'text-rose-500'}">$${s.total}</td>
+                        <td class="px-4 py-4 font-black text-slate-900 font-mono text-base ${s.isFullyQualified ? '' : 'text-slate-400'}">$${s.total}</td>
                         <td class="px-6 py-4 text-right"><span class="px-3 py-1 rounded text-[10px] font-black uppercase ${statusColor}">${statusMsg}</span></td>
                     </tr>`;
             });
 
-            // CUSTOM HTML SPECTRUM
-            renderSpectrumHTML(filteredProcessed, limitPrice);
-            
-            // OTHER CHARTS
-            renderMatrix(filteredProcessed, limitPrice, limitTime);
-            renderBar(filteredProcessed);
-            renderTrend(limitPrice);
+            renderDensitySpectrum(filteredProcessed, offers);
+            renderMatrix(filteredProcessed, offers);
             renderProductSpend();
-            renderValuation(limitPrice, minMarketPrice);
+            renderValuation(offers, minMarketPrice);
             renderCategory();
-            renderVendor();
         }
 
-        // ================= CUSTOM DOM SPECTRUM BUILDER =================
-        function renderSpectrumHTML(data, limit) {
+        // ================= CLEAN TIMELINE PRICE SPECTRUM =================
+        function renderDensitySpectrum(data, offers) {
             const container = document.getElementById('spectrumContainer');
             const specFilter = document.getElementById('spectrumFilter').value;
 
@@ -451,91 +486,230 @@
                 chartData = data.filter(s => s.term === specFilter);
             }
 
-            if (chartData.length === 0) {
-                container.innerHTML = '<div class="w-full h-full flex items-center justify-center text-slate-400 font-bold text-sm">No suppliers found for this term.</div>';
+            if (chartData.length === 0 && offers.length === 0) {
+                container.innerHTML = '<div class="w-full h-full flex items-center justify-center text-slate-400 font-bold text-sm">No data available for this filter.</div>';
                 return;
             }
 
-            const allPrices = chartData.map(s => s.total);
-            allPrices.push(limit); 
+            const dataPrices = chartData.map(s => s.total);
+            const offerPrices = offers.map(o => o.price);
+            const allPrices = [...dataPrices, ...offerPrices];
             
-            const minPrice = Math.min(...allPrices);
-            const maxPrice = Math.max(...allPrices);
+            let minPrice = Math.min(...allPrices);
+            let maxPrice = Math.max(...allPrices);
             
-            const padding = (maxPrice - minPrice) * 0.15 || 50; 
+            if (minPrice === maxPrice) {
+                minPrice -= 50;
+                maxPrice += 50;
+            }
+            
+            const padding = (maxPrice - minPrice) * 0.05; 
             const scaleMin = minPrice - padding;
             const scaleMax = maxPrice + padding;
             const range = scaleMax - scaleMin;
 
             const getPercent = (val) => ((val - scaleMin) / range) * 100;
-            const limitPercent = getPercent(limit);
+
+            const actualDataMin = dataPrices.length > 0 ? Math.min(...dataPrices) : minPrice;
+            const actualDataMax = dataPrices.length > 0 ? Math.max(...dataPrices) : maxPrice;
+            
+            // To grab the names for the min/max labels
+            const minDataPoint = chartData.find(s => s.total === actualDataMin) || {name: ''};
+            const maxDataPoint = chartData.find(s => s.total === actualDataMax) || {name: ''};
 
             let html = `
-                <div class="absolute top-1/2 left-0 w-full h-3 -translate-y-1/2 rounded-full overflow-hidden shadow-inner flex">
-                    <div style="width: ${limitPercent}%" class="h-full bg-gradient-to-r from-emerald-100 to-emerald-300 transition-all duration-500"></div>
-                    <div style="width: ${100 - limitPercent}%" class="h-full bg-gradient-to-r from-rose-100 to-rose-300 transition-all duration-500"></div>
-                </div>
-
-                <div class="absolute top-0 bottom-0 border-l-2 border-dashed border-indigo-500 z-10 transition-all duration-500" style="left: ${limitPercent}%;">
-                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-3 py-1 rounded-full text-[10px] font-black tracking-widest shadow-lg flex items-center gap-1.5 whitespace-nowrap">
-                        <span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
-                        YOUR OFFER: $${limit}
-                    </div>
-                </div>
+                <div class="relative w-full h-full flex items-center">
+                    <div class="absolute left-0 right-0 h-1.5 bg-slate-200 rounded-full shadow-inner"></div>
             `;
 
-            chartData.forEach((s, i) => {
+            // 1. Render Market/PO Points
+            chartData.forEach((s) => {
                 const pos = getPercent(s.total);
-                const isUnder = s.total <= limit;
+                const isPO = s.source === 'PO';
+                const isMin = s.total === actualDataMin;
+                const isMax = s.total === actualDataMax;
                 
-                const dotColor = isUnder ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]' : 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.8)]';
-                const ringColor = isUnder ? 'ring-emerald-200' : 'ring-rose-200';
-                const cardBorder = isUnder ? 'border-emerald-200' : 'border-rose-200';
-                const textColor = isUnder ? 'text-emerald-700' : 'text-rose-700';
-                const bgColor = isUnder ? 'bg-emerald-50/95' : 'bg-rose-50/95';
+                const dotColor = isPO ? 'bg-amber-400' : 'bg-blue-400';
+                const ringColor = isPO ? 'ring-amber-100' : 'ring-blue-100';
+                const badgeColor = isPO ? 'bg-amber-500/20 text-amber-600' : 'bg-blue-500/20 text-blue-400';
+                const zIndex = (isMin || isMax) ? 'z-30' : 'z-10';
+                
+                let tooltipTransform = "-translate-x-1/2"; 
+                if (pos < 15) tooltipTransform = "translate-x-0 left-4"; 
+                else if (pos > 85) tooltipTransform = "-translate-x-full right-4 left-auto";
 
-                const isTop = i % 2 === 0;
-                const cardPos = isTop ? 'bottom-full mb-3' : 'top-full mt-3';
-                const linePos = isTop ? 'bottom-2 h-4' : 'top-2 h-4';
+                let permanentLabel = '';
+                if (isMin || isMax) {
+                    const alignClass = isMin ? 'left-0 items-start' : 'right-0 items-end translate-x-1/2';
+                    const labelText = isMin ? 'Market Floor' : 'Market Ceiling';
+                    const priceColor = isMin ? 'text-emerald-500' : 'text-rose-500';
+                    permanentLabel = `
+                        <div class="absolute top-6 ${alignClass} flex flex-col w-32 pointer-events-none">
+                            <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest">${labelText}</span>
+                            <span class="text-base font-black ${priceColor} leading-none">$${s.total}</span>
+                            <span class="text-[9px] font-bold text-slate-500 truncate w-full ${isMin ? 'text-left' : 'text-right'}">${s.name}</span>
+                        </div>
+                    `;
+                }
 
                 html += `
-                    <div class="absolute top-1/2 -translate-y-1/2 transition-all duration-500 hover:z-50 z-20 group" style="left: ${pos}%;">
-                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full ${dotColor} ring-4 ${ringColor} cursor-pointer group-hover:scale-125 transition-transform"></div>
+                    <div class="absolute top-1/2 -translate-y-1/2 group cursor-pointer ${zIndex}" style="left: ${pos}%;">
+                        <div class="w-3 h-3 rounded-full ${dotColor} opacity-70 shadow-sm group-hover:scale-150 group-hover:opacity-100 transition-all border-2 border-white ring-2 ${ringColor} absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
                         
-                        <div class="absolute left-1/2 -translate-x-1/2 w-px bg-slate-300 ${linePos}"></div>
+                        ${permanentLabel}
 
-                        <div class="absolute ${cardPos} left-1/2 -translate-x-1/2 ${bgColor} backdrop-blur-md border ${cardBorder} shadow-lg rounded-xl p-2.5 w-36 transition-transform group-hover:-translate-y-1 cursor-default">
-                            <div class="flex justify-between items-start mb-1">
-                                <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest truncate max-w-[70px]" title="${s.name}">${s.name.split(' ')[0]}</span>
-                                <span class="bg-white border border-slate-200 text-slate-600 text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm">${s.term}</span>
+                        <div class="absolute bottom-6 ${tooltipTransform} w-48 bg-slate-900 text-white rounded-lg p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all shadow-xl pointer-events-none border border-slate-700 z-50">
+                            <div class="flex justify-between items-start mb-1.5 gap-2">
+                                <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest truncate leading-tight">${s.name}</span>
+                                <span class="${badgeColor} border border-slate-600/50 text-[8px] font-black px-1.5 py-0.5 rounded shrink-0 uppercase tracking-wider">${s.source}</span>
                             </div>
-                            <div class="text-xl font-black ${textColor}">$${s.total}</div>
+                            <div class="flex items-baseline justify-between mt-1">
+                                <span class="text-xl font-black text-white">$${s.total}</span>
+                                <span class="text-[10px] font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">${s.term}</span>
+                            </div>
                         </div>
                     </div>
                 `;
             });
 
+            // 2. Render User Offers
+            offers.forEach((offer, index) => {
+                const pos = getPercent(offer.price);
+                const staggerHeight = 32 + (index % 3) * 24; 
+
+                html += `
+                    <div class="absolute top-1/2 -translate-y-1/2 z-40" style="left: ${pos}%;">
+                        <div class="absolute bottom-1/2 left-1/2 -translate-x-1/2 w-0.5 bg-indigo-500" style="height: ${staggerHeight}px;"></div>
+                        
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-indigo-600 rounded-full border-2 border-white shadow-md flex items-center justify-center">
+                            <div class="w-1.5 h-1.5 bg-white rounded-full"></div>
+                        </div>
+
+                        <div class="absolute bottom-1/2 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-2.5 py-1 rounded shadow-lg flex flex-col items-center whitespace-nowrap" style="margin-bottom: ${staggerHeight}px;">
+                            <span class="text-[8px] font-black text-indigo-200 uppercase tracking-widest leading-none mb-0.5">${offer.id}</span>
+                            <span class="text-sm font-black leading-none">$${offer.price}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
             container.innerHTML = html;
         }
 
-        // ================= CHART.JS CONFIGS =================
-        function renderMatrix(data, priceLimit, timeLimit) {
+        // ================= MULTI-OFFER MATRIX =================
+        function renderMatrix(data, offers) {
             const ctx = document.getElementById('scatterChart').getContext('2d');
             if (scatterChart) scatterChart.destroy();
-            const chartPoints = data.map(s => ({ x: s.transitDays, y: s.total, n: s.name, shape: getPointStyle(s.mode), isWin: s.isFullyQualified }));
-            scatterChart = new Chart(ctx, { type: 'scatter', data: { datasets: [ { data: [{x:0, y:priceLimit}, {x:60, y:priceLimit}], type:'line', borderColor:'#6366f1', borderWidth: 2, borderDash:[5,5], pointRadius:0, label: 'Max Budget' }, { data: [{x:timeLimit, y:0}, {x:timeLimit, y:600}], type:'line', borderColor:'#8b5cf6', borderWidth: 2, borderDash:[5,5], pointRadius:0, label: 'Max Days' }, { label: 'Suppliers', data: chartPoints, backgroundColor: chartPoints.map(p => p.isWin ? '#10b981' : '#f43f5e'), pointStyle: chartPoints.map(p => p.shape), pointRadius: 10, pointHoverRadius: 14 } ] }, options: { maintainAspectRatio: false, scales: { x: { title: { display: true, text: 'Transit Time (Days)', font: {weight: 'bold'} }, min: 0, max: 50 }, y: { title: { display: true, text: 'Total Cost ($)', font: {weight: 'bold'} }, min: 200, max: 450 } }, plugins: { legend: { display: false }, datalabels: { display: false }, tooltip: { callbacks: { label: (c) => `${c.raw.n || c.dataset.label}: $${c.raw.y} / ${c.raw.x} Days` } } } } });
+            
+            const chartPoints = data.map(s => ({ 
+                x: s.transitDays, 
+                y: s.total, 
+                n: s.source === 'PO' ? s.name + ' (PO)' : s.name, 
+                shape: getPointStyle(s.mode), 
+                source: s.source,
+                mode: s.mode,
+                term: s.term
+            }));
+
+            const offerPoints = offers.map(o => ({
+                x: o.time, y: o.price, n: `${o.id}`, shape: 'star', isOffer: true, term: o.term
+            }));
+
+            const targetZonePlugin = {
+                id: 'targetZone',
+                beforeDraw: (chart) => {
+                    const ctx = chart.ctx;
+                    const xAxis = chart.scales.x;
+                    const yAxis = chart.scales.y;
+                    const x0 = xAxis.getPixelForValue(0);
+                    const y0 = yAxis.getPixelForValue(yAxis.min);
+
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(16, 185, 129, 0.08)'; 
+                    offers.forEach(offer => {
+                        const xLimit = xAxis.getPixelForValue(offer.time);
+                        const yLimit = yAxis.getPixelForValue(offer.price);
+                        const rightX = Math.min(xLimit, xAxis.right);
+                        const bottomY = Math.min(y0, yAxis.bottom);
+                        if (rightX > x0 && bottomY > yLimit) {
+                            ctx.fillRect(x0, yLimit, rightX - x0, bottomY - yLimit);
+                        }
+                    });
+                    ctx.restore();
+                }
+            };
+
+            scatterChart = new Chart(ctx, { 
+                type: 'scatter', 
+                data: { 
+                    datasets: [ 
+                        { 
+                            label: 'Your Offers', data: offerPoints, backgroundColor: '#8b5cf6', borderColor: '#6d28d9', borderWidth: 2, pointStyle: 'star', pointRadius: 10, pointHoverRadius: 14 
+                        },
+                        { 
+                            label: 'Database', data: chartPoints, 
+                            backgroundColor: chartPoints.map(p => p.source === 'Market' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(245, 158, 11, 0.6)'), 
+                            borderColor: chartPoints.map(p => p.source === 'Market' ? 'rgba(59, 130, 246, 1)' : 'rgba(245, 158, 11, 1)'),
+                            borderWidth: 1.5, pointStyle: chartPoints.map(p => p.shape), pointRadius: 6, pointHoverRadius: 10 
+                        } 
+                    ] 
+                }, 
+                options: { 
+                    maintainAspectRatio: false, 
+                    scales: { 
+                        x: { title: { display: true, text: 'Transit Time (Days)', font: {weight: 'bold', size: 10}, color: '#94a3b8' }, min: 0, suggestedMax: 60, grid: { color: '#f8fafc' } }, 
+                        y: { title: { display: true, text: 'Total Cost ($)', font: {weight: 'bold', size: 10}, color: '#94a3b8' }, min: 150, suggestedMax: 450, grid: { color: '#f8fafc' } } 
+                    }, 
+                    plugins: { 
+                        legend: { display: false }, datalabels: { display: false }, 
+                        tooltip: { 
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: 12, titleFont: { size: 13, weight: 'bold' }, bodyFont: { size: 12 },
+                            callbacks: { 
+                                title: (c) => c[0].raw.n,
+                                label: (c) => {
+                                    if(c.raw.isOffer) return [`Target Term: ${c.raw.term}`, `Max Cost: $${c.raw.y}`, `Max Time: ${c.raw.x} Days`];
+                                    return [`Source: ${c.raw.source}`, `Mode:   ${c.raw.mode}`, `Term:   ${c.raw.term}`, `Cost:   $${c.raw.y}`, `Time:   ${c.raw.x} Days`];
+                                } 
+                            } 
+                        } 
+                    } 
+                },
+                plugins: [targetZonePlugin]
+            });
         }
 
-        function renderBar(data) {
-            const ctx = document.getElementById('barChart').getContext('2d');
-            if (barChart) barChart.destroy();
-            barChart = new Chart(ctx, { type: 'bar', data: { labels: data.map(s=>s.name), datasets: [ { label:'Item', data:data.map(s=>s.price), backgroundColor:'#3b82f6', stack:'a' }, { label:'Transport', data:data.map(s=>s.delivery), backgroundColor:'#f59e0b', stack:'a' } ] }, options: { maintainAspectRatio:false, scales:{ x:{stacked:true}, y:{stacked:true} }, plugins:{legend:{position: 'bottom'}, datalabels:{display:false}} } });
-        }
+        // ================= DYNAMIC VALUATION =================
+        function renderValuation(offers, marketFloor) {
+            const ctx = document.getElementById('valuationChart').getContext('2d');
+            if (valuationChart) valuationChart.destroy();
+            
+            const histAvg = 310;
+            const marketHigh = 395;
 
-        function renderTrend(limit) {
-            const ctx = document.getElementById('trendChart').getContext('2d');
-            if (trendChart) trendChart.destroy();
-            trendChart = new Chart(ctx, { type: 'line', data: { labels: historicalData.years, datasets: [ { label: 'Budget Ceiling', data: Array(5).fill(limit), borderColor: '#6366f1', borderWidth: 2, borderDash: [5,5], pointRadius: 0, fill: false }, { label: 'DDP', data: historicalData.DDP, borderColor: '#10b981', tension: 0.3 }, { label: 'FOB', data: historicalData.FOB, borderColor: '#f59e0b', tension: 0.3 }, { label: 'EXW', data: historicalData.EXW, borderColor: '#ef4444', tension: 0.3 }, { label: 'DAP', data: historicalData.DAP, borderColor: '#3b82f6', tension: 0.3 } ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false }, legend: { position: 'bottom' } } } });
+            const labels = ['Market Floor'];
+            const data = [marketFloor];
+            const colors = ['#10b981'];
+
+            offers.forEach((o, i) => {
+                labels.push(o.id);
+                data.push(o.price);
+                colors.push(i % 2 === 0 ? '#6366f1' : '#8b5cf6'); 
+            });
+
+            labels.push('Hist. Avg', 'Mkt High');
+            data.push(histAvg, marketHigh);
+            colors.push('#94a3b8', '#f43f5e');
+
+            valuationChart = new Chart(ctx, { 
+                type: 'bar', 
+                data: { labels: labels, datasets: [{ label: 'Valuation ($)', data: data, backgroundColor: colors, borderRadius: 4 }] }, 
+                options: { 
+                    responsive: true, maintainAspectRatio: false, indexAxis: 'y', 
+                    plugins: { legend: { display: false }, datalabels: { display: false } }, 
+                    scales: { x: { beginAtZero: false, min: 150, grid: { color: '#f1f5f9' } }, y: { grid: { display: false } } } 
+                } 
+            });
         }
 
         function renderProductSpend() {
@@ -544,27 +718,14 @@
             productSpendChart = new Chart(ctx, { type: 'bar', data: { labels: macroSpendData.years, datasets: [{ label: 'Spend ($K)', data: macroSpendData.amounts, backgroundColor: '#3b82f6', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } } } });
         }
 
-        function renderValuation(myOffer, marketFloor) {
-            const ctx = document.getElementById('valuationChart').getContext('2d');
-            if (valuationChart) valuationChart.destroy();
-            const histAvg = 310;
-            const marketHigh = 395;
-            valuationChart = new Chart(ctx, { type: 'bar', data: { labels: ['Mkt Floor', 'Your Offer', 'Hist. Avg', 'Mkt High'], datasets: [{ label: 'Valuation ($)', data: [marketFloor, myOffer, histAvg, marketHigh], backgroundColor: ['#10b981', '#6366f1', '#94a3b8', '#f43f5e'], borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false }, datalabels: { display: false } }, scales: { x: { beginAtZero: false, min: 200, grid: { color: '#f1f5f9' } }, y: { grid: { display: false } } } } });
-        }
-
         function renderCategory() {
             const ctx = document.getElementById('categoryChart').getContext('2d');
             if (categoryChart) categoryChart.destroy();
             categoryChart = new Chart(ctx, { type: 'bar', data: { labels: macroCategoryData.labels, datasets: [{ label: 'Spend ($K)', data: macroCategoryData.amounts, backgroundColor: '#8b5cf6', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false }, datalabels: { display: false } }, scales: { x: { beginAtZero: true, grid: { color: '#f1f5f9' } }, y: { grid: { display: false }, ticks: { font: { size: 10 } } } } } });
         }
 
-        function renderVendor() {
-            const ctx = document.getElementById('vendorChart').getContext('2d');
-            if (vendorChart) vendorChart.destroy();
-            vendorChart = new Chart(ctx, { type: 'line', data: { labels: macroVendorData.quarters, datasets: [ { label: 'Caucasus Perf.', data: macroVendorData.v1, borderColor: '#10b981', backgroundColor: '#10b98122', fill: true, tension: 0.4 }, { label: 'Shenzhen Aero', data: macroVendorData.v3, borderColor: '#f59e0b', backgroundColor: '#f59e0b22', fill: true, tension: 0.4 }, { label: 'Anatolia Spares', data: macroVendorData.v2, borderColor: '#3b82f6', backgroundColor: '#3b82f622', fill: true, tension: 0.4 } ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } }, datalabels: { display: false } }, scales: { y: { stacked: true, beginAtZero: true, title: {display: true, text: 'Spend ($K)'}, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } } } });
-        }
-
-        updateAll();
+        updateRemoveButtons(); 
+        updateAll(); 
     </script>
 </body>
 </html>
